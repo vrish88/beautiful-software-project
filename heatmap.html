@@ -1,23 +1,6 @@
 <html>
   <head>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-      crossorigin=""
-    />
-    <!-- Make sure you put this AFTER Leaflet's CSS -->
-    <script
-      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-      crossorigin=""
-    ></script>
-
-    <style type="text/css">
-      #mapid {
-        height: 180px;
-      }
-    </style>
+    <meta charset="utf-8"/>
   </head>
   <body>
     <h1>Beautiful Software</h1>
@@ -41,20 +24,34 @@
     </main>
 
     <main>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""
+      />
+      <!-- Make sure you put this AFTER Leaflet's CSS -->
+      <script
+        src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""
+      ></script>
+
+      <style type="text/css">
+        #mapid {
+          height: 180px;
+        }
+      </style>
+
       <h2>Mapping of Feeling</h2>
       <button id="load-map">Load Map</button>
 
       <div id="mapid"></div>
 
       <script type="text/javascript">
-        document.getElementById("feeling-form").onsubmit = function (e) {
-          e.preventDefault();
-
-          new FormData(e.target).get("feeling-intensity");
-        };
         const mymap = L.map("mapid");
 
-        document.getElementById("load-map").onclick(function () {
+        document.getElementById("load-map").onclick = function () {
           const layer = L.tileLayer(
             "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
             {
@@ -75,7 +72,7 @@
 
             mymap.setView([lat, long], 13);
           });
-        });
+        };
       </script>
     </main>
 
