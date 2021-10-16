@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
+
+    <style type="text/css">
+      #mapid {
+        height: 180px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Beautiful Software</h1>
+    <main>
+      <h2>Feeling Assessment Where You Are</h2>
+      <form id="feeling-form">
+        <label>
+          feeling
+          <input type="range" name="feeling-intensity" min="0" max="5" />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+
+      <script type="text/javascript">
+        document.getElementById("feeling-form").onsubmit = function (e) {
+          e.preventDefault();
+
+          new FormData(e.target).get("feeling-intensity");
+        };
+      </script>
+    </main>
+
+    <main>
+      <h2>Mapping of Feeling</h2>
+      <button id="load-map">Load Map</button>
+
+      <div id="mapid"></div>
+
+      <script type="text/javascript">
+        document.getElementById("feeling-form").onsubmit = function (e) {
+          e.preventDefault();
+
+          new FormData(e.target).get("feeling-intensity");
+        };
+        const mymap = L.map("mapid");
+
+        document.getElementById("load-map").onclick(function () {
+          const layer = L.tileLayer(
+            "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
+            {
+              attribution:
+                'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+              maxZoom: 18,
+              id: "mapbox/streets-v11",
+              tileSize: 512,
+              zoomOffset: -1,
+              accessToken:
+                "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w",
+            }
+          ).addTo(mymap);
+
+          navigator.geolocation.getCurrentPosition(function (position) {
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
+
+            mymap.setView([lat, long], 13);
+          });
+        });
+      </script>
+    </main>
+
+    <aside>
+      <h2>Proposed Sequence</h2>
+      <ol>
+        <li>
+          <h3>Technical aspects</h3>
+          <p>Local transient data</p>
+
+          <h3>User context</h3>
+          <p>
+            Some place where there is data already existing. So presumably
+            outdoors. Focused on capturing "How do you feel right here right
+            now?"
+          </p>
+        </li>
+        <li>
+          <h3>Technical aspects</h3>
+          <p>Persisted global data</p>
+
+          <h3>User context</h3>
+          <p>Aggregating the global results into a global map.</p>
+        </li>
+      </ol>
+
+      <h2>Curating Moments of Good Creation</h2>
+    </aside>
+  </body>
+</html>
