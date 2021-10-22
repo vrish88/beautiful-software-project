@@ -1,0 +1,220 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <script type="text/javascript">
+    const feelings = [];
+    let callback = () => {};
+    var feelingsStore = {
+      push: (data) => {
+        feelings.push(data);
+        callback(feelingsStore);
+      },
+      getFeelings: () => feelings,
+      registerCallback: (c) => (callback = c),
+    };
+  </script>
+  <body>
+    <h1>Beautiful Software</h1>
+    <main>
+      <h2>Feeling Assessment Where You Are</h2>
+      <form id="feeling-form">
+        <label>
+          feeling
+          <input type="range" name="feeling-intensity" min="0" max="5" />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+
+      <script type="text/javascript">
+        document.getElementById("feeling-form").onsubmit = function (e) {
+          e.preventDefault();
+
+          navigator.geolocation.getCurrentPosition(function (position) {
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
+
+            feelingsStore.push({
+              intensity: new FormData(e.target).get("feeling-intensity"),
+              lat: lat,
+              long: long,
+            });
+          });
+        };
+      </script>
+    </main>
+
+    <main>
+      <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+      <link
+        href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css"
+        rel="stylesheet"
+      />
+
+      <style type="text/css">
+        #map {
+          height: 180px;
+          width: 100%;
+        }
+      </style>
+
+      <h2>Mapping of Feeling</h2>
+      <button id="load-map">Load Map</button>
+      <button id="load-preset-map">Load Map with Preset Data</button>
+
+      <div id="map"></div>
+
+      <script type="module">
+        import accessToken from "./accessToken.js"
+        mapboxgl.accessToken = accessToken;
+        const loadFeelingData = (mapSource, feelings) => {
+          mapSource.setData({
+            type: "FeatureCollection",
+            features: feelings.map((f) => ({
+              type: "Feature",
+              properties: { intensity: f.intensity },
+              geometry: {
+                type: "Point",
+                coordinates: [f.long, f.lat],
+              },
+            })),
+          });
+        };
+
+        const createMap = (lat, long) => {
+          return new Promise((resolve) => {
+            const map = new mapboxgl.Map({
+              container: "map",
+              style: "mapbox://styles/mapbox/dark-v10",
+              center: [long, lat],
+              zoom: 15,
+            });
+
+            map.on("load", () => {
+              map.addSource("feelings", {
+                type: "geojson",
+                data: {
+                  type: "FeatureCollection",
+                  features: [],
+                },
+              });
+              map.addLayer({
+                id: "feelings-heat",
+                type: "heatmap",
+                source: "feelings",
+                maxzoom: 20,
+                paint: {
+                  "heatmap-weight": {
+                    property: "intensity",
+                    type: "identity",
+                  },
+                },
+              });
+
+              resolve(map.getSource("feelings"));
+            });
+          });
+        };
+        document.getElementById("load-preset-map").onclick = function () {
+          createMap(40.703571, -74.015368).then((mapSource) => {
+            loadFeelingData(mapSource, [
+              { lat: 40.703677, long: -74.016191, intensity: 1 },
+              { lat: 40.704563, long: -74.017193, intensity: 5 },
+            ]);
+          });
+        };
+
+        document.getElementById("load-map").onclick = function () {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
+            console.log(position.coords);
+
+            createMap(lat, long).then((mapSource) => {
+              loadFeelingData(mapSource, feelingsStore.getFeelings());
+            });
+          });
+
+          feelingsStore.registerCallback(() => {});
+        };
+      </script>
+    </main>
+
+    <aside>
+      <h2>Proposed Sequence</h2>
+      <ol>
+        <li>
+          <h3>Technical aspects</h3>
+          <p>Local transient data</p>
+
+          <h3>User context</h3>
+          <p>
+            Some place where there is data already existing. So presumably
+            outdoors. Focused on capturing "How do you feel right here right
+            now?"
+          </p>
+        </li>
+        <li>
+          <h3>Technical aspects</h3>
+          <p>Persisted global data</p>
+
+          <h3>User context</h3>
+          <p>Aggregating the global results into a global map.</p>
+        </li>
+      </ol>
+
+      <h2>Curating Moments of Good Creation</h2>
+      <section>
+        <h3><time>2021-10-21</time></h3>
+        <p>
+          Hookay, I've been trying to get faster feedback configuring the map.
+          It had this kinda weird fuzzy white-ish outline that wasn't very easy
+          to see at a high zoom. To test it, each time I had to add a couple
+          feelings and then load the map. To skip those steps I just created a
+          new button, just for me :) to create the map with some preset data.
+          This had the interesting side-effect of having better factored code,
+          with the <code>createMap</code> function and maybe it'll also help
+          give demos of what a feelings map might look like.
+        </p>
+
+        <p>
+          Another thought that I had while reading a
+          <a
+            href="https://www.baldurbjarnason.com/2021/100-things-every-web-developer-should-know/"
+            >blog post</a
+          >
+          was that maybe we could start by importing and exporting files? It
+          turns out the
+          <a href="https://docs.mapbox.com/mapbox-gl-js/api/map/#map#addsource"
+            ><code>addSource</code> function from MapBox</a
+          >
+          is able to load the geojson data from a file.
+          <a
+            href="https://doc.arcgis.com/en/arcgis-online/reference/geojson.htm"
+            >GeoJSON</a
+          >
+          is effectively a data file format that encodes geospatial data.
+        </p>
+
+        <p>The workflow would look something like this</p>
+
+        <ol>
+          <li>On their phone a user maps out a couple feelings</li>
+          <li>
+            When they are done, we give them a file to download with their
+            mapping
+          </li>
+          <li>They save that to their phone, can email it to others, etc</li>
+        </ol>
+
+        <p>This would have a couple of benefits as a way to start:</p>
+
+        <ol>
+          <li>It would be cheap because we wouldn't need to store any data.</li>
+          <li>It would be extensible because users could share data.</li>
+          <li>There might be existing tools that work with geojson files.</li>
+        </ol>
+      </section>
+    </aside>
+  </body>
+</html>
