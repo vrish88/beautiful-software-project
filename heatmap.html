@@ -163,6 +163,55 @@
       </ol>
 
       <h2>Curating Moments of Good Creation</h2>
+      <section>
+        <h3><time>2021-10-21</time></h3>
+        <p>
+          Hookay, I've been trying to get faster feedback configuring the map.
+          It had this kinda weird fuzzy white-ish outline that wasn't very easy
+          to see at a high zoom. To test it, each time I had to add a couple
+          feelings and then load the map. To skip those steps I just created a
+          new button, just for me :) to create the map with some preset data.
+          This had the interesting side-effect of having better factored code,
+          with the <code>createMap</code> function and maybe it'll also help
+          give demos of what a feelings map might look like.
+        </p>
+
+        <p>
+          Another thought that I had while reading a
+          <a
+            href="https://www.baldurbjarnason.com/2021/100-things-every-web-developer-should-know/"
+            >blog post</a
+          >
+          was that maybe we could start by importing and exporting files? It
+          turns out the
+          <a href="https://docs.mapbox.com/mapbox-gl-js/api/map/#map#addsource"
+            ><code>addSource</code> function from MapBox</a
+          >
+          is able to load the geojson data from a file.
+          <a
+            href="https://doc.arcgis.com/en/arcgis-online/reference/geojson.htm"
+            >GeoJSON</a
+          >
+          is effectively a data file format that encodes geospatial data.
+        </p>
+
+        <p>The workflow would look something like this</p>
+
+        <ol>
+          <li>On their phone a user maps out a couple feelings</li>
+          <li>When they are done, we give them a file to download with their mapping</li>
+          <li>They save that to their phone, can email it to others, etc</li>
+        </ol>
+
+        <p>This would have a couple of benefits as a way to start:</p>
+
+        <ol>
+          <li>It would be cheap because we wouldn't need to store any data.</li>
+          <li>It would be extensible because users could share data.</li>
+          <li>There might be existing tools that work with geojson files.</li>
+        </ol>
+
+      </section>
     </aside>
   </body>
 </html>
