@@ -8,6 +8,11 @@
       <script type="text/javascript">
         const feelings = [];
         let callback = () => {};
+        let currentLocation = null;
+        var currentLocationStore = {
+          set: (l) => (currentLocation = l),
+          get: () => currentLocation,
+        };
         var feelingsStore = {
           push: (data) => {
             feelings.push(data);
@@ -16,6 +21,10 @@
           getFeelings: () => feelings,
           registerCallback: (c) => (callback = c),
         };
+
+        navigator.geolocation.watchPosition((position) => {
+          currentLocationStore.set(position);
+        });
       </script>
 
       <main>
@@ -40,15 +49,14 @@
           document.getElementById("feeling-form").onsubmit = function (e) {
             e.preventDefault();
 
-            navigator.geolocation.getCurrentPosition(function (position) {
-              let lat = position.coords.latitude;
-              let long = position.coords.longitude;
+            const position = currentLocationStore.get();
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
 
-              feelingsStore.push({
-                intensity: new FormData(e.target).get("feeling-intensity"),
-                lat: lat,
-                long: long,
-              });
+            feelingsStore.push({
+              intensity: new FormData(e.target).get("feeling-intensity"),
+              lat: lat,
+              long: long,
             });
           };
         </script>
@@ -117,7 +125,7 @@
                     "heatmap-weight": {
                       property: "intensity",
                       type: "identity",
-                    }
+                    },
                   },
                 });
 
@@ -135,16 +143,15 @@
           };
 
           document.getElementById("load-map").onclick = function () {
-            navigator.geolocation.getCurrentPosition(function (position) {
-              let lat = position.coords.latitude;
-              let long = position.coords.longitude;
+            const position = currentLocationStore.get();
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
 
-              createMap(lat, long).then((mapSource) => {
-                loadFeelingData(mapSource, feelingsStore.getFeelings());
-                feelingsStore.registerCallback(() =>
-                  loadFeelingData(mapSource, feelingsStore.getFeelings())
-                );
-              });
+            createMap(lat, long).then((mapSource) => {
+              loadFeelingData(mapSource, feelingsStore.getFeelings());
+              feelingsStore.registerCallback(() =>
+                loadFeelingData(mapSource, feelingsStore.getFeelings())
+              );
             });
           };
         </script>
