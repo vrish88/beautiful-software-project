@@ -60,6 +60,7 @@
 
       <h2>Mapping of Feeling</h2>
       <button id="load-map">Load Map</button>
+      <button id="load-preset-map">Load Map with Preset Data</button>
 
       <div id="map"></div>
 
@@ -81,11 +82,8 @@
           });
         };
 
-        document.getElementById("load-map").onclick = function () {
-          navigator.geolocation.getCurrentPosition(function (position) {
-            let lat = position.coords.latitude;
-            let long = position.coords.longitude;
-            console.log(position.coords);
+        const createMap = (lat, long) => {
+          return new Promise((resolve) => {
             const map = new mapboxgl.Map({
               container: "map",
               style: "mapbox://styles/mapbox/dark-v10",
@@ -107,62 +105,32 @@
                   type: "heatmap",
                   source: "feelings",
                   maxzoom: 20,
-                  paint: {
-                    // increase weight as diameter breast height increases
-                    "heatmap-weight": {
-                      property: "intensity",
-                      type: "exponential",
-                      stops: [
-                        [1, 0],
-                        [62, 1],
-                      ],
-                    },
-                    // increase intensity as zoom level increases
-                    "heatmap-intensity": {
-                      stops: [
-                        [11, 1],
-                        [15, 3],
-                      ],
-                    },
-                    // assign color values be applied to points depending on their density
-                    "heatmap-color": [
-                      "interpolate",
-                      ["linear"],
-                      ["heatmap-density"],
-                      0,
-                      "rgba(236,222,239,0)",
-                      0.2,
-                      "rgb(208,209,230)",
-                      0.4,
-                      "rgb(166,189,219)",
-                      0.6,
-                      "rgb(103,169,207)",
-                      0.8,
-                      "rgb(28,144,153)",
-                    ],
-                    // increase radius as zoom increases
-                    "heatmap-radius": {
-                      stops: [
-                        [11, 15],
-                        [15, 20],
-                      ],
-                    },
-                    // decrease opacity to transition into the circle layer
-                    "heatmap-opacity": {
-                      default: 1,
-                      stops: [
-                        [14, 1],
-                        [15, 0],
-                      ],
-                    },
-                  },
                 },
-                "waterway-label"
+                "feelings-layer"
               );
-              loadFeelingData(
-                map.getSource("feelings"),
-                feelingsStore.getFeelings()
-              );
+
+              resolve(map.getSource("feelings"));
+            });
+          });
+        };
+        document.getElementById("load-preset-map").onclick = function () {
+          createMap(40.703571, -74.015368).then((mapSource) => {
+            loadFeelingData(mapSource, [
+              { lat: 40.703677, long: -74.016191, intensity: 4 },
+              { lat: 40.704563, long: -74.017193, intensity: 5 },
+              { lat: 40.704563, long: -74.017193, intensity: 5 },
+            ]);
+          });
+        };
+
+        document.getElementById("load-map").onclick = function () {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
+            console.log(position.coords);
+
+            createMap(lat, long).then((mapSource) => {
+              loadFeelingData(mapSource, feelingsStore.getFeelings());
             });
           });
 
