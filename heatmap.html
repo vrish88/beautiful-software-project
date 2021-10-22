@@ -2,143 +2,154 @@
   <head>
     <meta charset="utf-8" />
   </head>
-  <script type="text/javascript">
-    const feelings = [];
-    let callback = () => {};
-    var feelingsStore = {
-      push: (data) => {
-        feelings.push(data);
-        callback(feelingsStore);
-      },
-      getFeelings: () => feelings,
-      registerCallback: (c) => (callback = c),
-    };
-  </script>
   <body>
     <h1>Beautiful Software</h1>
-    <main>
-      <h2>Feeling Assessment Where You Are</h2>
-      <form id="feeling-form">
-        <label>
-          feeling
-          <input type="range" name="feeling-intensity" min="0" max="5" />
-        </label>
-        <input type="submit" value="Submit" />
-      </form>
-
+    <section>
       <script type="text/javascript">
-        document.getElementById("feeling-form").onsubmit = function (e) {
-          e.preventDefault();
-
-          navigator.geolocation.getCurrentPosition(function (position) {
-            let lat = position.coords.latitude;
-            let long = position.coords.longitude;
-
-            feelingsStore.push({
-              intensity: new FormData(e.target).get("feeling-intensity"),
-              lat: lat,
-              long: long,
-            });
-          });
+        const feelings = [];
+        let callback = () => {};
+        var feelingsStore = {
+          push: (data) => {
+            feelings.push(data);
+            callback(feelingsStore);
+          },
+          getFeelings: () => feelings,
+          registerCallback: (c) => (callback = c),
         };
       </script>
-    </main>
 
-    <main>
-      <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
-      <link
-        href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css"
-        rel="stylesheet"
-      />
+      <main>
+        <h2>Feeling Assessment Where You Are</h2>
+        <form id="feeling-form">
+          <h3></h3>
+          <ol>
+            <li>Assess your current feeling</li>
+            <li>
+              We are not looking for your taste but rather connectedness as a
+              human being
+            </li>
+          </ol>
+          <label>
+            feeling
+            <input type="range" name="feeling-intensity" min="0" max="5" />
+          </label>
+          <input type="submit" value="Submit" />
+        </form>
 
-      <style type="text/css">
-        #map {
-          height: 180px;
-          width: 100%;
-        }
-      </style>
+        <script type="text/javascript">
+          document.getElementById("feeling-form").onsubmit = function (e) {
+            e.preventDefault();
 
-      <h2>Mapping of Feeling</h2>
-      <button id="load-map">Load Map</button>
-      <button id="load-preset-map">Load Map with Preset Data</button>
+            navigator.geolocation.getCurrentPosition(function (position) {
+              let lat = position.coords.latitude;
+              let long = position.coords.longitude;
 
-      <div id="map"></div>
-
-      <script type="module">
-        mapboxgl.accessToken = "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w";
-        const loadFeelingData = (mapSource, feelings) => {
-          mapSource.setData({
-            type: "FeatureCollection",
-            features: feelings.map((f) => ({
-              type: "Feature",
-              properties: { intensity: f.intensity },
-              geometry: {
-                type: "Point",
-                coordinates: [f.long, f.lat],
-              },
-            })),
-          });
-        };
-
-        const createMap = (lat, long) => {
-          return new Promise((resolve) => {
-            const map = new mapboxgl.Map({
-              container: "map",
-              style: "mapbox://styles/mapbox/dark-v10",
-              center: [long, lat],
-              zoom: 15,
-            });
-
-            map.on("load", () => {
-              map.addSource("feelings", {
-                type: "geojson",
-                data: {
-                  type: "FeatureCollection",
-                  features: [],
-                },
+              feelingsStore.push({
+                intensity: new FormData(e.target).get("feeling-intensity"),
+                lat: lat,
+                long: long,
               });
-              map.addLayer({
-                id: "feelings-heat",
-                type: "heatmap",
-                source: "feelings",
-                maxzoom: 20,
-                paint: {
-                  "heatmap-weight": {
-                    property: "intensity",
-                    type: "identity",
+            });
+          };
+        </script>
+      </main>
+
+      <main>
+        <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+        <link
+          href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css"
+          rel="stylesheet"
+        />
+
+        <style type="text/css">
+          #map {
+            height: 300px;
+            width: 300px;
+          }
+        </style>
+
+        <h2>Mapping of Feeling</h2>
+        <button id="load-map">Load Map</button>
+        <button id="load-preset-map">Load Map with Preset Data</button>
+
+        <div id="map"></div>
+
+        <script type="module">
+          mapboxgl.accessToken =
+            "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w";
+          const loadFeelingData = (mapSource, feelings) => {
+            mapSource.setData({
+              type: "FeatureCollection",
+              features: feelings.map((f) => ({
+                type: "Feature",
+                properties: { intensity: f.intensity },
+                geometry: {
+                  type: "Point",
+                  coordinates: [f.long, f.lat],
+                },
+              })),
+            });
+          };
+
+          const createMap = (lat, long) => {
+            return new Promise((resolve) => {
+              const map = new mapboxgl.Map({
+                container: "map",
+                style: "mapbox://styles/mapbox/dark-v10",
+                center: [long, lat],
+                zoom: 15,
+              });
+
+              map.on("load", () => {
+                map.addSource("feelings", {
+                  type: "geojson",
+                  data: {
+                    type: "FeatureCollection",
+                    features: [],
                   },
-                },
+                });
+                map.addLayer({
+                  id: "feelings-heat",
+                  type: "heatmap",
+                  source: "feelings",
+                  maxzoom: 20,
+                  paint: {
+                    "heatmap-weight": {
+                      property: "intensity",
+                      type: "identity",
+                    }
+                  },
+                });
+
+                resolve(map.getSource("feelings"));
               });
-
-              resolve(map.getSource("feelings"));
             });
-          });
-        };
-        document.getElementById("load-preset-map").onclick = function () {
-          createMap(40.703571, -74.015368).then((mapSource) => {
-            loadFeelingData(mapSource, [
-              { lat: 40.703677, long: -74.016191, intensity: 1 },
-              { lat: 40.704563, long: -74.017193, intensity: 5 },
-            ]);
-          });
-        };
-
-        document.getElementById("load-map").onclick = function () {
-          navigator.geolocation.getCurrentPosition(function (position) {
-            let lat = position.coords.latitude;
-            let long = position.coords.longitude;
-            console.log(position.coords);
-
-            createMap(lat, long).then((mapSource) => {
-              loadFeelingData(mapSource, feelingsStore.getFeelings());
+          };
+          document.getElementById("load-preset-map").onclick = function () {
+            createMap(40.703571, -74.015368).then((mapSource) => {
+              loadFeelingData(mapSource, [
+                { lat: 40.703677, long: -74.016191, intensity: 1 },
+                { lat: 40.704563, long: -74.017193, intensity: 5 },
+              ]);
             });
-          });
+          };
 
-          feelingsStore.registerCallback(() => {});
-        };
-      </script>
-    </main>
+          document.getElementById("load-map").onclick = function () {
+            navigator.geolocation.getCurrentPosition(function (position) {
+              let lat = position.coords.latitude;
+              let long = position.coords.longitude;
 
+              createMap(lat, long).then((mapSource) => {
+                loadFeelingData(mapSource, feelingsStore.getFeelings());
+                feelingsStore.registerCallback(() =>
+                  loadFeelingData(mapSource, feelingsStore.getFeelings())
+                );
+              });
+            });
+          };
+        </script>
+      </main>
+    </section>
     <aside>
       <h2>Proposed Sequence</h2>
       <ol>
