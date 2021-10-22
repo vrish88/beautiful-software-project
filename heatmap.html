@@ -1,7 +1,19 @@
 <html>
   <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
   </head>
+  <script type="text/javascript">
+    const feelings = [];
+    let callback = () => {};
+    var feelingsStore = {
+      push: (data) => {
+        feelings.push(data);
+        callback(feelingsStore);
+      },
+      getFeelings: () => feelings,
+      registerCallback: (c) => (callback = c),
+    };
+  </script>
   <body>
     <h1>Beautiful Software</h1>
     <main>
@@ -18,60 +30,143 @@
         document.getElementById("feeling-form").onsubmit = function (e) {
           e.preventDefault();
 
-          new FormData(e.target).get("feeling-intensity");
+          navigator.geolocation.getCurrentPosition(function (position) {
+            let lat = position.coords.latitude;
+            let long = position.coords.longitude;
+
+            feelingsStore.push({
+              intensity: new FormData(e.target).get("feeling-intensity"),
+              lat: lat,
+              long: long,
+            });
+          });
         };
       </script>
     </main>
 
     <main>
+      <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
       <link
+        href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css"
         rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-        crossorigin=""
       />
-      <!-- Make sure you put this AFTER Leaflet's CSS -->
-      <script
-        src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-        crossorigin=""
-      ></script>
 
       <style type="text/css">
-        #mapid {
+        #map {
           height: 180px;
+          width: 100%;
         }
       </style>
 
       <h2>Mapping of Feeling</h2>
       <button id="load-map">Load Map</button>
 
-      <div id="mapid"></div>
+      <div id="map"></div>
 
       <script type="text/javascript">
-        const mymap = L.map("mapid");
+        mapboxgl.accessToken =
+          "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w";
+
+        const loadFeelingData = (mapSource, feelings) => {
+          mapSource.setData({
+            type: "FeatureCollection",
+            features: feelings.map((f) => ({
+              type: "Feature",
+              properties: { intensity: f.intensity },
+              geometry: {
+                type: "Point",
+                coordinates: [f.long, f.lat],
+              },
+            })),
+          });
+        };
 
         document.getElementById("load-map").onclick = function () {
-          const layer = L.tileLayer(
-            "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
-            {
-              attribution:
-                'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-              maxZoom: 18,
-              id: "mapbox/streets-v11",
-              tileSize: 512,
-              zoomOffset: -1,
-              accessToken:
-                "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w",
-            }
-          ).addTo(mymap);
-
           navigator.geolocation.getCurrentPosition(function (position) {
             let lat = position.coords.latitude;
             let long = position.coords.longitude;
+            console.log(position.coords);
+            const map = new mapboxgl.Map({
+              container: "map",
+              style: "mapbox://styles/mapbox/dark-v10",
+              center: [long, lat],
+              zoom: 15,
+            });
 
-            mymap.setView([lat, long], 13);
+            map.on("load", () => {
+              map.addSource("feelings", {
+                type: "geojson",
+                data: {
+                  type: "FeatureCollection",
+                  features: [],
+                },
+              });
+              map.addLayer(
+                {
+                  id: "feelings-heat",
+                  type: "heatmap",
+                  source: "feelings",
+                  maxzoom: 20,
+                  paint: {
+                    // increase weight as diameter breast height increases
+                    "heatmap-weight": {
+                      property: "intensity",
+                      type: "exponential",
+                      stops: [
+                        [1, 0],
+                        [62, 1],
+                      ],
+                    },
+                    // increase intensity as zoom level increases
+                    "heatmap-intensity": {
+                      stops: [
+                        [11, 1],
+                        [15, 3],
+                      ],
+                    },
+                    // assign color values be applied to points depending on their density
+                    "heatmap-color": [
+                      "interpolate",
+                      ["linear"],
+                      ["heatmap-density"],
+                      0,
+                      "rgba(236,222,239,0)",
+                      0.2,
+                      "rgb(208,209,230)",
+                      0.4,
+                      "rgb(166,189,219)",
+                      0.6,
+                      "rgb(103,169,207)",
+                      0.8,
+                      "rgb(28,144,153)",
+                    ],
+                    // increase radius as zoom increases
+                    "heatmap-radius": {
+                      stops: [
+                        [11, 15],
+                        [15, 20],
+                      ],
+                    },
+                    // decrease opacity to transition into the circle layer
+                    "heatmap-opacity": {
+                      default: 1,
+                      stops: [
+                        [14, 1],
+                        [15, 0],
+                      ],
+                    },
+                  },
+                },
+                "waterway-label"
+              );
+              loadFeelingData(
+                map.getSource("feelings"),
+                feelingsStore.getFeelings()
+              );
+            });
           });
+
+          feelingsStore.registerCallback(() => {});
         };
       </script>
     </main>
