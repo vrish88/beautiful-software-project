@@ -64,10 +64,9 @@
 
       <div id="map"></div>
 
-      <script type="text/javascript">
-        mapboxgl.accessToken =
-          "pk.eyJ1IjoidnJpc2g4OCIsImEiOiJja3VzeTUydXQ1amlmMm5xamI3cWZ5Ym5xIn0.ufgWhRNVhyE9h7RLJegG0w";
-
+      <script type="module">
+        import accessToken from "./accessToken.js"
+        mapboxgl.accessToken = accessToken;
         const loadFeelingData = (mapSource, feelings) => {
           mapSource.setData({
             type: "FeatureCollection",
