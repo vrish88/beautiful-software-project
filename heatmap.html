@@ -99,15 +99,18 @@
                   features: [],
                 },
               });
-              map.addLayer(
-                {
-                  id: "feelings-heat",
-                  type: "heatmap",
-                  source: "feelings",
-                  maxzoom: 20,
+              map.addLayer({
+                id: "feelings-heat",
+                type: "heatmap",
+                source: "feelings",
+                maxzoom: 20,
+                paint: {
+                  "heatmap-weight": {
+                    property: "intensity",
+                    type: "identity",
+                  },
                 },
-                "feelings-layer"
-              );
+              });
 
               resolve(map.getSource("feelings"));
             });
@@ -116,8 +119,7 @@
         document.getElementById("load-preset-map").onclick = function () {
           createMap(40.703571, -74.015368).then((mapSource) => {
             loadFeelingData(mapSource, [
-              { lat: 40.703677, long: -74.016191, intensity: 4 },
-              { lat: 40.704563, long: -74.017193, intensity: 5 },
+              { lat: 40.703677, long: -74.016191, intensity: 1 },
               { lat: 40.704563, long: -74.017193, intensity: 5 },
             ]);
           });
@@ -199,7 +201,10 @@
 
         <ol>
           <li>On their phone a user maps out a couple feelings</li>
-          <li>When they are done, we give them a file to download with their mapping</li>
+          <li>
+            When they are done, we give them a file to download with their
+            mapping
+          </li>
           <li>They save that to their phone, can email it to others, etc</li>
         </ol>
 
@@ -210,7 +215,6 @@
           <li>It would be extensible because users could share data.</li>
           <li>There might be existing tools that work with geojson files.</li>
         </ol>
-
       </section>
     </aside>
   </body>
