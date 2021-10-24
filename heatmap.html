@@ -21,10 +21,6 @@
           getFeelings: () => feelings,
           registerCallback: (c) => (callback = c),
         };
-
-        navigator.geolocation.watchPosition((position) => {
-          currentLocationStore.set(position);
-        });
       </script>
 
       <main>
@@ -77,9 +73,6 @@
         </style>
 
         <h2>Mapping of Feeling</h2>
-        <button id="load-map">Load Map</button>
-        <button id="load-preset-map">Load Map with Preset Data</button>
-
         <div id="map"></div>
 
         <script type="module">
@@ -99,16 +92,30 @@
             });
           };
 
-          const createMap = (lat, long) => {
+          const createMap = () => {
             return new Promise((resolve) => {
               const map = new mapboxgl.Map({
                 container: "map",
                 style: "mapbox://styles/mapbox/satellite-v9",
-                center: [long, lat],
-                zoom: 18,
+              });
+
+              const geoControl = new mapboxgl.GeolocateControl({
+                positionOptions: {
+                  enableHighAccuracy: true,
+                },
+                fitBoundsOptions: {
+                  duration: 0,
+                },
+                trackUserLocation: true,
+                showUserHeading: true,
+              });
+              map.addControl(geoControl);
+              geoControl.on("geolocate", (position) => {
+                currentLocationStore.set(position);
               });
 
               map.on("load", () => {
+                geoControl.trigger();
                 map.addSource("feelings", {
                   type: "geojson",
                   data: {
@@ -133,27 +140,13 @@
               });
             });
           };
-          document.getElementById("load-preset-map").onclick = function () {
-            createMap(40.703571, -74.015368).then((mapSource) => {
-              loadFeelingData(mapSource, [
-                { lat: 40.703677, long: -74.016191, intensity: 1 },
-                { lat: 40.704563, long: -74.017193, intensity: 5 },
-              ]);
-            });
-          };
 
-          document.getElementById("load-map").onclick = function () {
-            const position = currentLocationStore.get();
-            let lat = position.coords.latitude;
-            let long = position.coords.longitude;
-
-            createMap(lat, long).then((mapSource) => {
-              loadFeelingData(mapSource, feelingsStore.getFeelings());
-              feelingsStore.registerCallback(() =>
-                loadFeelingData(mapSource, feelingsStore.getFeelings())
-              );
-            });
-          };
+          createMap().then((mapSource) => {
+            loadFeelingData(mapSource, feelingsStore.getFeelings());
+            feelingsStore.registerCallback(() =>
+              loadFeelingData(mapSource, feelingsStore.getFeelings())
+            );
+          });
         </script>
       </main>
     </section>
